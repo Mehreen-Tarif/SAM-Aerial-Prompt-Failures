@@ -1,0 +1,163 @@
+STATISTICAL PRE-REGISTRATION — GRSL Revision
+==============================================
+Written before the full-scale experiment (sam_experiment_v3.py) is run.
+Locking these in beforehand protects against a reviewer critique that
+the reported comparisons were chosen after seeing which ones looked
+best — the exact issue that undermines post-hoc multiple-comparison
+correction.
+
+PRIMARY HYPOTHESIS
+-------------------
+[REVISED — capability-boundary framing] Zero-shot SAM's segmentation
+quality under point-based prompts degrades as object scale decreases,
+and box-containing prompts (BB, BPC) shift the point at which this
+degradation occurs. This is characterized via TWO linked, pre-
+registered outcomes rather than one:
+
+(A) FAILURE RATE: proportion of instances where IoU < 0.5 (using the
+    same threshold as the original submission's IoU>=0.5 metric, for
+    continuity), reported per strategy x size stratum. This is the
+    primary "capability boundary" metric.
+(B) CONDITIONAL QUALITY: mean IoU among instances where IoU >= 0.5
+    ("given a usable mask was returned, how good is it"), reported
+    per strategy x size stratum. Secondary, complements (A).
+
+Every valid instance is retained in both analyses regardless of
+outcome — a low or zero IoU is a legitimate DATA POINT (an instance
+of "failure"), not something to be excluded. No paired-intersection
+subsetting (i.e. no dropping instances where any one strategy failed)
+is applied anywhere in this analysis — this was identified as a risk
+in the original submission's paired design (n=266 after intersection
+across 7 strategies), which would have systematically excluded the
+exact small/hard instances this analysis is about.
+
+The exact SHAPE of the result (a sharp collapse below some size
+threshold vs. a smooth gradual decline) is not assumed in advance —
+whichever the data shows determines whether the paper is framed as a
+"failure boundary" (if failure rate approaches ~100% below a
+threshold) or a "crossover/threshold" characterization (if the
+change is more gradual). This framing decision is made AFTER seeing
+the failure-rate-by-stratum result, not before — everything else in
+this document is decided before seeing it.
+
+STATISTICAL REPORTING — EFFECT SIZE FIRST
+--------------------------------------------
+Given n=116,649, conventional significance testing is close to
+uninformative on its own — nearly any real difference will reach
+p<0.001 regardless of practical magnitude. Results are therefore led
+with effect size, not p-value:
+  - Cliff's delta / matched-pairs rank-biserial correlation as the
+    primary effect-size statistic (non-parametric, appropriate given
+    per-instance IoU differences are bounded and likely non-normal)
+  - Bootstrap 95% CIs on the raw magnitude of each difference (e.g.
+    the failure-rate gap in percentage points between BPC and CP
+    within the "small" stratum)
+  - Wilcoxon signed-rank p-values still reported, but as confirmatory
+    /secondary evidence, not the headline
+  - Paired Cohen's d retained for continuity with the original
+    submission's reporting style, also secondary
+
+MECHANISM EVIDENCE — ELONGATION CORRELATION
+-----------------------------------------------
+One cheap, real piece of evidence for the "box encodes extent, point
+doesn't" architectural explanation: correlate the per-instance
+box-vs-point IoU advantage with object elongation (bbox aspect ratio,
+computed as max(w,h)/min(w,h) from the original annotation bbox — no
+additional experiment needed, computed at analysis time by joining
+raw_results_full.csv back to the annotation file via ann_id). If the
+box advantage grows with elongation, that's consistent with — not
+proof of — the extent-encoding explanation, and is reported as
+correlational, explicitly, not causal or mechanistic-in-the-strong-
+sense.
+
+ROBUSTNESS CHECK
+------------------
+Paired (per-instance differences) vs. unpaired (independent per-
+strategy distributions) agreement is checked within each size
+stratum. Agreement across both analytical approaches strengthens the
+result; disagreement is reported as a finding in its own right rather
+than resolved by picking whichever is more favorable.
+
+PLANNED PAIRWISE COMPARISONS (k = 8, Bonferroni-corrected)
+------------------------------------------------------------
+1. BPC vs CP     (replicates original paper's headline comparison)
+2. BPC vs CPC
+3. BPC vs BB     (tests centroid-disambiguation effect)
+4. BPC vs CPN    (NEW — tests whether negative points close the gap
+                  to box+center, directly answering Reviewer 2)
+5. BB  vs CP
+6. BB  vs MP10
+7. CP  vs CPN    (NEW — does adding negative points fix center-point's
+                  low precision specifically, isolated from box effects)
+8. BB  vs CPN
+
+STRATIFIED / INTERACTION ANALYSIS
+------------------------------------
+Primary test: does the (BPC - CP) mIoU gap differ significantly across
+small / medium / large strata? Reported via:
+  (a) Bootstrap 95% CIs of the per-stratum gap — non-overlap across
+      strata is treated as evidence of a genuine interaction
+  (b) An omnibus rank-based test (Kruskal-Wallis) on the per-instance
+      (BPC-CP) difference across the three strata
+
+This is the CORE novel contribution of the revision — not just "box
+beats point" (already known) but "the size of that gap is scale-
+dependent in aerial imagery," which is a new empirical finding.
+
+TEST SELECTION
+---------------
+Per-instance paired IoU differences are checked for normality
+(Shapiro-Wilk) before choosing a test:
+  - If normal: paired t-test (reported for continuity with the
+    original submission)
+  - Primary reported test regardless: Wilcoxon signed-rank (does not
+    assume normality — addresses Reviewer 2's critique directly)
+Effect sizes: paired Cohen's d (parametric) AND matched-pairs
+rank-biserial correlation (non-parametric), both reported.
+
+CORRECTION
+-----------
+Bonferroni correction applied across the 8 planned pairwise
+comparisons above (p_corrected = min(1, 8 * p)). The interaction
+test is reported separately and is not included in this correction
+factor, since it addresses a distinct question (does the gap vary by
+stratum) rather than a pairwise strategy comparison.
+
+SIZE STRATA DEFINITION
+------------------------
+COCO-style thresholds, computed on ORIGINAL image resolution pixel
+area (not resized/distorted):
+  small:  area <  1,024 px^2  (32x32)
+  medium: 1,024 <= area < 9,216 px^2  (32x32 to 96x96)
+  large:  area >= 9,216 px^2  (96x96)
+
+SAMPLE
+-------
+Full iSAID validation set, no per-category cap, no largest-N
+filtering. Only genuinely invalid annotations excluded (zero-area
+mask, degenerate bbox, image file not found, RLE decode failure) —
+exclusion criteria fixed BEFORE running, not adjusted afterward.
+
+Dataset audit (run prior to the experiment) found 116,649 valid
+instances across 458 images, with severe category imbalance:
+Small_Vehicle alone constitutes 72% of all instances (84,096/116,649).
+Large_Vehicle and Small_Vehicle have zero instances in the "large"
+size stratum — an expected property of these object classes, not a
+data error. Both facts are reported in the paper's dataset description
+rather than hidden.
+
+ADDED (pre-registered in response to the imbalance above): alongside
+the primary pooled per-instance analysis, a MACRO-AVERAGED analysis is
+also reported — mean IoU computed per category first, then averaged
+across the 15 categories with equal weight regardless of instance
+count. This guards against the pooled result being read as an artifact
+of vehicle-heavy composition. Both pooled and macro-averaged results
+are reported side by side; this is a reporting addition, not a new
+inferential test, and does not require additional Bonferroni
+correction.
+
+WHAT IS NOT PRE-REGISTERED (exploratory, to be labeled as such)
+-------------------------------------------------------------------
+- Per-category breakdowns (Table IV style) — descriptive/exploratory
+- Confidence-IoU correlation analysis (Figure 3 style) — exploratory
+- Any comparison not listed in the 8 above
