@@ -4,10 +4,10 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg)](https://pytorch.org/)
 [![SAM](https://img.shields.io/badge/SAM-ViT--H-green.svg)](https://github.com/facebookresearch/segment-anything)
-[![Paper](https://img.shields.io/badge/Paper-GRSL%202026-red.svg)](#citation)
+[![Paper](https://img.shields.io/badge/Paper-GRSL%202026-red.svg)](#-citation)
 
-> Code and data release for the paper:
-> **"Segment Anything Model for Remote Sensing Instance Segmentation: Systematic Prompt Strategy Evaluation and Bounding Box Superiority on iSAID"**
+> Code, data, and pre-registered analysis plan for the paper:
+> **"Segment Anything Model for Remote Sensing Instance Segmentation: A Full-Population Evaluation of Prompt Reliability on iSAID"**
 >
 > Mehreen Tarif, Wu Xu, Sana Abbas
 > College of Computer Science and Cyber Security, Chengdu University of Technology, China
@@ -16,25 +16,24 @@
 
 ---
 
-## ⭐ Primary Scripts (Start Here)
+## ⚠️ Note on Earlier Results in This Repository
 
-To reproduce the paper's results, use these primary scripts:
+An earlier version of this repository reported results from a **size-filtered sample** (333 instances, the 25 largest per category) evaluated at a fixed 1024×1024 downsampled resolution. Those results indicated that Box-plus-Center (BPC) outperformed Bounding-Box-alone (BB).
 
-| Script | Purpose |
-|:-------|:--------|
-| **`SAM_FINAL_EXPERIMENT.py`** | 🎯 Main experiment runner (all 7 strategies × 333 instances) |
-| **`SAM_ABLATION.py`** | Ablation studies (backbone, resolution, noise) |
-| **`statistical_analysis.py`** | Cohen's d, Bonferroni correction, bootstrap CIs |
-| **`create_paper_figures.py`** | Generate paper figures (Fig 1, 4, 5) |
+**That ordering does not hold at population scale.** Re-evaluating across the complete iSAID validation set (116,649 instances) at native resolution reverses it: **BB outperforms BPC**. Two evaluation choices account for the difference, and the current paper quantifies both:
 
-> 💡 The repository also contains earlier exploration scripts kept for transparency about the development process. The four primary scripts above are sufficient to reproduce all results in the paper.
+| Factor | Contribution to the reversal |
+|:-------|:----------------------------|
+| IoU computed at fixed downsampled resolution instead of native | ~2/3 |
+| Size-filtered rather than representative instance sampling | ~1/3 |
+
+The superseded numbers have been removed from this README to avoid confusion. This note is retained deliberately, since the methodological finding — that evaluation design alone can flip which prompt strategy appears superior — is a contribution of the current paper.
 
 ---
 
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
-- [Why Prompt Choice Matters](#-why-prompt-choice-matters)
 - [Key Findings](#-key-findings)
 - [Results](#-results)
 - [Installation](#-installation)
@@ -47,88 +46,82 @@ To reproduce the paper's results, use these primary scripts:
 
 ## 🎯 Overview
 
-This repository contains the complete experimental framework for evaluating **seven prompt configurations** of the Segment Anything Model (SAM) on the iSAID aerial imagery benchmark. We provide a systematic comparison under a controlled, zero-shot protocol with statistical rigor.
+This repository contains the experimental framework for evaluating **eight prompt configurations** of the Segment Anything Model (SAM) on the iSAID aerial imagery benchmark, across the **complete validation population**: 116,649 instances spanning all 458 images and 15 object categories, for 933,192 SAM inferences.
 
-The main finding is that **box-based prompts substantially outperform point-based prompts** for aerial instance segmentation:
+No size-based or category-based subsampling is applied. Every annotation passing basic validity checks is included.
 
-| Prompt Type | mIoU | Cohen's d |
-|:-----------:|:----:|:---------:|
-| Box-plus-Center (BPC) | **0.432** | — |
-| Bounding Box (BB) | 0.374 | 0.44 vs BPC |
-| Center Point (CP) | 0.111 | 1.49 vs BPC |
-
----
-
-## 🖼️ Why Prompt Choice Matters
-
-The same SAM ViT-H model on the same iSAID image produces dramatically different results depending on prompt type:
-
-<p align="center">
-<img src="figures/Fig1_Motivation_Teaser.png" alt="Motivation: Why prompt choice matters" width="80%"/>
-</p>
-
-**Same model, same image, different prompt — IoU jumps from 0.0012 (centroid) to 0.8197 (bounding box).**
+The central finding is that prompt geometry affects segmentation primarily through **reliability** (whether a usable mask is returned at all) rather than **fidelity** (its quality once one is).
 
 ---
 
 ## 🔬 Key Findings
 
-1. **BPC outperforms CP by 0.321 mIoU** (Cohen's d = 1.49, p < 0.001 after Bonferroni correction)
-2. **Box-versus-point ordering is robust** across:
-   - SAM backbone scales (ViT-H and ViT-B)
-   - Input resolutions (512, 768, 1024 px)
-   - Bounding-box coordinate noise up to ±10 pixels
-3. **Zero-shot SAM-BPC achieves 38.7% IoU ≥ 0.5 rate**, placing it within the published mAP@0.5 range of supervised baselines (32.3%–47.3%) without using any iSAID training data
-4. **Effect originates in prompt content**, not mask selection (oracle selection only raises CP from 0.111 to 0.169)
+1. **Reliability, not fidelity.** Strategies differ mainly in how often they return a usable mask (IoU ≥ 0.5), not in mask quality when they succeed. Conditional IoU on success is comparable across prompt families; failure rates are not.
+
+2. **The box advantage is scale-dependent, and grows with object size.** The failure-rate gap between point and box prompts is *narrowest* on small objects (6–10 percentage points, where every strategy struggles) and *widest* on large objects (14–19 points, where prompt choice becomes decisive).
+
+3. **BB outperforms BPC at population scale** (BPC − BB = −0.027 mean IoU; rank-biserial −0.50, p < 0.001). Adding a center point to a box shifts reliability only, with no meaningful quality difference (|Δ| ≤ 0.007 in every size stratum).
+
+4. **Negative points do not rescue point prompts.** A negative-point variant (CPN) improves modestly over Center Point (0.159 vs 0.149 mIoU) but remains far short of box-level reliability.
+
+5. **The mechanism remains open (honest null).** A shape-correlation test found no meaningful relationship between object elongation and the box advantage (Spearman ρ = −0.007 and ρ = −0.0007; both negligible despite large *n*).
 
 ---
 
 ## 📊 Results
 
-### Strategy Comparison
+### Per-Strategy Performance (full validation population)
 
-Mean IoU per prompt strategy on the iSAID evaluation set (n = 333). Box-based strategies (BPC, BB) form a clear performance tier above all five point-based strategies.
+n = 116,649 instances, SAM ViT-H, native resolution, seed = 42.
 
-<p align="center">
-<img src="figures/Fig4_Strategy_Comparison.png" alt="Strategy comparison" width="80%"/>
-</p>
+| Strategy | mIoU | Macro mIoU | Failure % | Conditional IoU |
+|:---------|:----:|:----------:|:---------:|:---------------:|
+| **BB** (Bounding Box) | **0.325** | **0.553** | **72.9** | 0.682 |
+| BPC (Box + Center) | 0.299 | 0.525 | 76.4 | 0.685 |
+| CPN (Center + 3 Negative) | 0.159 | 0.356 | 82.7 | 0.717 |
+| CP (Center Point) | 0.149 | 0.327 | 83.5 | 0.714 |
+| MP3 (Multi-Point 3) | 0.120 | 0.304 | 87.2 | 0.706 |
+| MP5 (Multi-Point 5) | 0.119 | 0.310 | 87.4 | 0.702 |
+| MP10 (Multi-Point 10) | 0.117 | 0.313 | 88.2 | 0.697 |
+| CPC (Corners + Center) | 0.052 | 0.123 | 96.9 | 0.620 |
 
-### Confidence vs IoU Calibration
+The ranking is identical under pooled and macro-averaged aggregation, confirming it is not an artifact of class imbalance (Small_Vehicle alone is 72% of instances).
 
-Self-predicted SAM confidence versus mean IoU for each prompt strategy. Point-based strategies cluster in the high-confidence, low-IoU region, illustrating SAM's calibration gap under sparse prompts.
+### Failure Rate and Conditional Quality by Object Size
 
-<p align="center">
-<img src="figures/Fig5_Confidence_IoU.png" alt="Confidence vs IoU" width="80%"/>
-</p>
+S/M/L = small (<32×32 px) / medium / large (≥96×96 px), COCO-style thresholds fixed before running.
 
-### Per-Strategy Performance Table
+| Strategy | Fail% S | Fail% M | Fail% L | Cond. IoU S | Cond. IoU M | Cond. IoU L |
+|:---------|:-------:|:-------:|:-------:|:-----------:|:-----------:|:-----------:|
+| BB | **78.9** | **16.0** | **12.4** | 0.653 | 0.742 | 0.815 |
+| BPC | 82.3 | 19.3 | 13.5 | 0.656 | 0.735 | 0.815 |
+| CP | 88.7 | 33.6 | 31.3 | 0.693 | 0.742 | 0.793 |
+| CPN | 88.2 | 29.5 | 26.7 | 0.694 | 0.748 | 0.799 |
+| CPC | 97.9 | 86.4 | 92.0 | 0.610 | 0.633 | 0.674 |
 
-Evaluation on 333 iSAID instances across 15 categories, 2,331 SAM inferences, ViT-H at 1024×1024, seed = 42.
+Note the dissociation: failure rates diverge sharply between prompt families, while conditional IoU converges.
 
-| Strategy | mIoU | 95% CI | Precision | Recall | F1 | Time (ms) |
-|:---------|:----:|:------:|:---------:|:------:|:--:|:---------:|
-| **BPC** | **0.433** | [0.405, 0.461] | 0.751 | 0.552 | 0.598 | 13.17 |
-| BB | 0.374 | [0.347, 0.402] | 0.758 | 0.444 | 0.510 | 12.45 |
-| MP10 | 0.154 | [0.136, 0.173] | 0.183 | 0.831 | 0.272 | 12.89 |
-| MP5 | 0.135 | [0.119, 0.152] | 0.158 | 0.838 | 0.244 | 12.67 |
-| MP3 | 0.122 | [0.108, 0.137] | 0.144 | 0.847 | 0.224 | 12.23 |
-| CP | 0.112 | [0.098, 0.127] | 0.131 | 0.852 | 0.211 | 31.17 |
-| CPC | 0.099 | [0.087, 0.112] | 0.108 | 0.847 | 0.182 | 12.78 |
+### Failure-Rate Gap by Stratum (95% bootstrap CI)
 
-### Statistical Comparisons
+| Comparison | Small | Medium | Large |
+|:-----------|:-----:|:------:|:-----:|
+| CP vs BB | 9.85 [9.65, 10.03] | 17.63 [16.84, 18.42] | 18.92 [16.64, 21.20] |
+| CP vs BPC | 6.38 [6.21, 6.55] | 14.31 [13.51, 15.08] | 17.78 [15.50, 20.21] |
 
-All eight pairwise comparisons reach the Bonferroni-corrected threshold (p < 0.001):
+### Pre-Registered Pairwise Comparisons
 
-| Comparison | Δ IoU | Cohen's d | Magnitude |
-|:----------|:-----:|:---------:|:---------:|
-| BPC vs CPC | +0.334 | **1.56** | Very large |
-| BPC vs CP | +0.322 | **1.49** | Very large |
-| BPC vs MP3 | +0.313 | **1.41** | Very large |
-| BPC vs MP10 | +0.283 | **1.15** | Large |
-| BB vs CP | +0.259 | **1.09** | Large |
-| BB vs MP3 | +0.250 | **1.03** | Large |
-| BB vs MP10 | +0.221 | **0.84** | Large |
-| BPC vs BB | +0.063 | **0.44** | Small-Medium |
+Differences are first-named minus second-named strategy; a negative value means the second performs better. All reach p < 0.001 after Bonferroni correction (k = 8). Led by effect size, since at n = 116,649 p-values are significant for even negligible effects.
+
+| Comparison | Δ IoU | 95% CI | Rank-biserial | Cohen's d |
+|:-----------|:-----:|:------:|:-------------:|:---------:|
+| BPC vs CPC | +0.247 | [0.246, 0.248] | **0.798** | 1.131 |
+| BB vs MP10 | +0.208 | [0.207, 0.209] | 0.689 | 1.121 |
+| BB vs CP | +0.176 | [0.175, 0.177] | 0.570 | 0.927 |
+| BB vs CPN | +0.166 | [0.165, 0.167] | 0.539 | 0.887 |
+| BPC vs CP | +0.150 | [0.149, 0.151] | 0.585 | 0.858 |
+| BPC vs CPN | +0.139 | [0.138, 0.140] | 0.550 | 0.817 |
+| BPC vs BB | −0.027 | [−0.027, −0.026] | −0.504 | −0.342 |
+| CP vs CPN | −0.011 | [−0.011, −0.010] | −0.222 | −0.103 |
 
 ---
 
@@ -140,86 +133,95 @@ All eight pairwise comparisons reach the Bonferroni-corrected threshold (p < 0.0
 - **CUDA-capable GPU** (RTX 3090 used in paper; ViT-H needs ~16 GB VRAM)
 - **~20 GB disk space** for the iSAID dataset
 
-### Step 1: Clone the repository
+### Step 1: Clone
 
 ```bash
-git clone https://github.com/Mehreen-Tarif/SAM-Prompt-Comparisonfor.git
-cd SAM-Prompt-Comparisonfor
+git clone https://github.com/Mehreen-Tarif/SAM-Prompt-Comparison.git
+cd SAM-Prompt-Comparison
 ```
 
-### Step 2: Install Python dependencies
+### Step 2: Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 3: Download SAM checkpoints
+### Step 3: Download SAM checkpoint
 
 ```bash
 wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
-wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
 ```
 
-### Step 4: Download iSAID dataset
+### Step 4: Download iSAID
 
-Visit the official iSAID page: **https://captain-whu.github.io/iSAID/**
+Annotations and masks: **https://captain-whu.github.io/iSAID/**
+
+Source RGB images come from DOTA v1.0: **https://captain-whu.github.io/DOTA/dataset.html**
+
+> ⚠️ The iSAID distribution ships annotations and masks but **not** the raw validation images. Those must be downloaded separately from DOTA v1.0. All 458 validation images are required.
 
 ---
 
 ## 🚀 Quick Start
 
-To reproduce all results in the paper, run the main experiment script:
-
 ```bash
-python SAM_FINAL_EXPERIMENT.py
+# 1. Validate the dataset before spending GPU time (no GPU needed)
+python audit_dataset.py
+
+# 2. Fast sanity check on ~30 images
+python sam_experiment_v3.py --smoke
+
+# 3. Full run over all 116,649 instances (resumable)
+python sam_experiment_v3.py
+
+# 4. Clean and verify the raw output
+python verify_and_clean_results.py
+
+# 5. Run the pre-registered analysis
+python analysis_v1.py
 ```
 
-This runs all six phases:
-- Phase 1: Build experiment plan (333 instances, 15 categories)
-- Phase 2: Main experiment (7 strategies × 333 instances)
-- Phase 3: Ablation A1 (ViT-H vs ViT-B backbone)
-- Phase 4: Ablation A2 (Resolution: 512/768/1024)
-- Phase 5: Ablation A3 (Bounding box noise)
-- Phase 6: Statistical analysis (Bonferroni, Cohen's d, bootstrap)
+**Expected runtime:** approximately 12–14 hours on an RTX 3090 for the full population.
 
-**Expected runtime:** 75–90 minutes on RTX 3090.
-
-> 💡 **Note:** The script is resumable. If interrupted, just re-run and it continues from the last checkpoint.
-
-### Generate paper figures
-
-```bash
-python create_paper_figures.py
-```
+> 💡 The experiment checkpoints at the **instance** level. If interrupted, re-run the same command and it resumes from the last completed instance — no work is lost, even mid-image.
 
 ---
 
 ## 🔄 Reproducing Results
 
-All results in the paper are reproducible with the fixed random seed (42).
+All results use a fixed random seed (42) with CUDA in deterministic mode. An environment manifest (library versions, GPU, CUDA version) is written alongside the results on every run.
 
-| Paper Reference | CSV File |
-|:----------------|:---------|
-| Table II (Per-Strategy Performance) | `results/Table_II_Overall.csv` |
-| Table III (Statistical Comparisons) | `results/Table_III_Stats.csv` |
-| Section IV-C, Ablation A1 | `results/Ablation_A1_Backbone.csv` |
-| Section IV-C, Ablation A2 | `results/Ablation_A2_Resolution.csv` |
-| Section IV-C, Ablation A3 | `results/Ablation_A3_BoxNoise.csv` |
+| Paper Reference | Output File |
+|:----------------|:------------|
+| Table I (per-strategy, pooled and by stratum) | `results/analysis/01_pooled_overall.csv`, `03_failure_rate_by_stratum.csv` |
+| Table II (failure-rate gap by stratum) | `results/analysis/13_failure_rate_gap_by_stratum.csv` |
+| Table III (pairwise comparisons) | `results/analysis/05_pairwise_effect_sizes.csv` |
+| Macro-averaged robustness check | `results/analysis/02_macro_averaged.csv` |
+| Mechanism test (honest null) | `results/analysis/12_elongation_BB_CP_and_error_check.txt` |
+| Paired vs unpaired robustness | `results/analysis/08_paired_unpaired_agreement.csv` |
+
+### Pre-Registration
+
+The statistical analysis plan — the eight planned pairwise comparisons, the size-stratum thresholds, the choice of effect-size-first reporting, and the exclusion criteria — was fixed **before** the full-population experiment was run. See `STATISTICAL_PREREGISTRATION.txt`.
 
 ### Sampling Note
 
-The 333 evaluation instances are the **25 largest instances per category**. This choice ensures prompt-mask correspondence is meaningful and visible. Performance on smaller or occluded instances may differ. See the Limitations section of the paper for further discussion.
+The evaluation uses the **complete** iSAID validation population. Zero instances were excluded on any validity criterion; all 116,649 annotations were valid.
+
+Separately, 57 of 933,192 evaluations (0.006%, confined to MP3/MP5/MP10 and concentrated on complex Harbor geometry) raised a point-array construction exception in the SAM predictor. These are scored as IoU = 0 rather than dropped, consistent with treating an unsuccessful segmentation as a failure. BB, BPC, CP, and CPN are unaffected.
+
+### Known Scope
+
+Prompts are derived from ground-truth annotations as a deliberate **oracle-localization control**, isolating prompt geometry from detector localization error. An end-to-end evaluation with detector-generated prompts is planned as follow-up work and is **not** included here.
 
 ---
 
 ## 📝 Citation
 
-If you use this code or build on this work, please cite our paper:
-
 ```bibtex
 @article{tarif2026sam,
   title   = {Segment Anything Model for Remote Sensing Instance Segmentation:
-             Systematic Prompt Strategy Evaluation and Bounding Box Superiority on iSAID},
+             A Full-Population Evaluation of Prompt Reliability on iSAID},
   author  = {Tarif, Mehreen and Xu, Wu and Abbas, Sana},
   journal = {IEEE Geoscience and Remote Sensing Letters},
   year    = {2026},
@@ -244,20 +246,10 @@ If you use this code or build on this work, please cite our paper:
 | First Author | Mehreen Tarif | mehreentarif17@gmail.com |
 | Corresponding Author | Wu Xu | wuxu2022@cdut.edu.cn |
 
-For questions about the code or paper, please open an [Issue](https://github.com/Mehreen-Tarif/SAM-Prompt-Comparisonfor/issues) or contact the authors directly.
+For questions about the code or paper, please open an [Issue](https://github.com/Mehreen-Tarif/SAM-Prompt-Comparison/issues) or contact the authors directly.
 
 ---
 
 ## 📜 License
 
-This code is released under the [MIT License](LICENSE) for research and reproducibility purposes.
-
----
-
-<div align="center">
-
-**⭐ If you find this work useful, please consider starring the repository! ⭐**
-
-Made with ❤️ at Chengdu University of Technology
-
-</div>
+Released under the [MIT License](LICENSE) for research and reproducibility purposes.
