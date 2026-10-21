@@ -61,7 +61,7 @@ Every script states its inputs, outputs and approximate run time at the top. Eva
 
 ## Data and weights
 
-Per-instance results (one CSV row per instance, prompt type and configuration, with the IoU and predicted IoU of all three candidate masks), adapter weights and detector weights: Zenodo, DOI to be added.
+Per-instance results (one CSV row per instance, prompt type and configuration, with the IoU and predicted IoU of all three candidate masks), adapter weights and detector weights: Zenodo, [doi:10.5281/zenodo.23540023](https://doi.org/10.5281/zenodo.23540023).
 
 ## Citation
 
