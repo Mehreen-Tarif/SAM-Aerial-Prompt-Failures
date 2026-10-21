@@ -1,50 +1,8 @@
-# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Dataset files (large files - don't upload)
-*.zip
-*.tar
-*.gz
-*.pkl
-*.pickle
-*.npy
-*.npz
-*.h5
-*.hdf5
-
-# Results and logs
-results/
-logs/
-
-# SAM model weights (very large!)
+*.pt
 *.pth
-*.ckpt
-sam_vit_h_4b8939.pth
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Temporary files
-*.tmp
-*.temp
+results*/
+lora_*/
+det/
+*.log
+*_log.txt

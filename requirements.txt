@@ -1,18 +1,11 @@
-# Core dependencies
-torch>=2.7.1
-torchvision>=0.22.1
-numpy>=2.2.1
-opencv-python>=4.10.0
-matplotlib>=3.10.8
-segment-anything>=1.0
-
-# Additional utilities
-scikit-learn>=1.5.0
-scipy>=1.13.0
-pandas>=2.2.2
-tqdm>=4.66.0
-Pillow>=11.1.0
-
-# Development
-jupyter>=1.0.0
-ipykernel>=6.29.0
+torch==2.7.1
+segment-anything==1.0
+pycocotools==2.0.11
+numpy
+pandas
+scipy
+opencv-python
+matplotlib
+Pillow
+ultralytics==8.4.182
+# SAM 2: install from https://github.com/facebookresearch/sam2 at commit 2b90b9f
