@@ -1,6 +1,0 @@
-Noise Level,mIoU,Drop vs Tight (%)
-Tight (0px),0.4215,0.0
-+-5px jitter,0.413,2.0
-+-10px jitter,0.377,10.6
-+-20px jitter,0.3582,15.0
-+-30px jitter,0.2948,30.1

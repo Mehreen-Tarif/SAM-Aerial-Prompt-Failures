@@ -1,5 +1,0 @@
-Comparison,IoU Diff,p-value,p Bonf,Cohens d,Significant
-BB vs CP,0.3184,<0.001,<0.001,1.72,Yes
-BB vs MP10,0.321,<0.001,<0.001,1.68,Yes
-BB vs BPC,-0.0613,0.0121,0.0485,-0.31,Yes
-BPC vs CP,0.3798,<0.001,<0.001,2.51,Yes

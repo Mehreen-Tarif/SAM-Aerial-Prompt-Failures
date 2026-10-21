@@ -1,8 +1,0 @@
-Method,Backbone,Training,mAP50,mIoU,Year,Reference
-Mask R-CNN [He et al. 2017],ResNet-50,Supervised,32.3,—,2017,[17]
-HTC [Chen et al. 2019],ResNet-50,Supervised,36.4,—,2019,[18]
-QueryInst [Fang et al. 2021],ResNet-50,Supervised,40.1,—,2021,[19]
-RSPrompter [Chen et al. 2024],ViT-H (SAM),Supervised,47.3,—,2024,[21]
-SAM-BB (Ours),ViT-H,Zero-shot,—,0.4215,2024,—
-SAM-BPC (Ours),ViT-H,Zero-shot,—,0.4828,2024,—
-SAM-CP (Ours),ViT-H,Zero-shot,—,0.103,2024,—

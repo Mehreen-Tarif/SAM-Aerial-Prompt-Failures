@@ -1,3 +1,0 @@
-Backbone,Parameters,mIoU,Instances
-ViT-H (636M params),636M params,0.4215,40
-ViT-B (91M params),91M params,0.4834,40
