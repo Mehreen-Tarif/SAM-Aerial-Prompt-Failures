@@ -91,7 +91,7 @@ MIN_N = 30          # bins with fewer instances are not drawn (too noisy)
 
 RUNS_SCALE = [      # folder, legend label, style key, linestyle, hollow marker?
     ("sam1_whole",      "SAM, whole image",        "whole",    "-",  False),
-    ("sam1_legacy1024", "SAM, legacy protocol",    "legacy",   "-",  False),
+    ("sam1_legacy1024", "SAM, square resize",    "legacy",   "-",  False),
     ("sam1_tile1024",   "SAM, 1024-px tiles",      "tile1024", "-",  False),
     ("sam1_tile512",    "SAM, 512-px tiles (2×)",  "tile512",  "-",  False),
     ("sam2_whole",      "SAM 2, whole image",      "whole",    "--", True),
@@ -155,7 +155,7 @@ def fig_scale():
 # --------------------------------------------------------------------------------------
 RUNS_GAP = [        # folder, label, style key, hollow?
     ("sam1_whole",          "SAM ViT-H, whole image",   "whole",    False),
-    ("sam1_legacy1024",     "SAM ViT-H, legacy",        "legacy",   False),
+    ("sam1_legacy1024",     "SAM ViT-H, square resize",        "legacy",   False),
     ("sam1_tile1024",       "SAM ViT-H, 1024-px tiles", "tile1024", False),
     ("sam1_tile512",        "SAM ViT-H, 512-px tiles",  "tile512",  False),
     ("sam1-vit_l_tile1024", "SAM ViT-L, 1024-px tiles", "vit_l",    False),
