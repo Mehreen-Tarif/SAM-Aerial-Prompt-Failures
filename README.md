@@ -1,6 +1,6 @@
 # Diagnosing prompt failures of the Segment Anything Model on aerial images
 
-Code for the paper *Diagnosing prompt failures of the Segment Anything Model on aerial images: input scale, mask selection and adaptation* (M. Tarif, W. Xu, S. Abbas).
+Code for the paper *Diagnosing prompt failures of the Segment Anything Model on aerial images: input scale, mask selection and adaptation* (M. Tarif, W. Xu, B. Tarif, S. Abbas).
 
 The per-instance results of every configuration, the adapter weights and the detector weights are archived separately (see *Data and weights* below), because the result files are too large for GitHub.
 
